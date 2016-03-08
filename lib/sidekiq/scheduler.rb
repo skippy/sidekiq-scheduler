@@ -137,7 +137,9 @@ module Sidekiq
     def self.enqueue_job(job_config)
       config = job_config.dup
 
-      config['class'] = config['class'].constantize if config['class'].is_a?(String)
+      if config['class'].is_a?(String) && Object.const_defined?(config['class'])
+        config['class'] = config['class'].constantize
+      end
       config['args'] = Array(config['args'])
 
       if defined?(ActiveJob::Enqueuing) && config['class'].included_modules.include?(ActiveJob::Enqueuing)

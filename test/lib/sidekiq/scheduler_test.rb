@@ -50,6 +50,27 @@ class ManagerTest < Minitest::Test
       Sidekiq::Scheduler.enqueue_job(config)
     end
 
+    it 'enqueues string if class does not exist in the load path' do
+      # The job should be loaded, since a missing rails_env means ALL envs.
+      ENV['RAILS_ENV'] = 'production'
+      config = {
+        'cron' => '* * * * *',
+        'class' => 'SomeRemoteClass',
+        'queue' => 'high',
+        'args' => '/tmp'
+      }
+
+      Sidekiq::Client.expects(:push).with(
+        {
+          'cron' => '* * * * *',
+          'class' => 'SomeRemoteClass',
+          'queue' => 'high',
+          'args' => ['/tmp']
+        }
+      )
+      Sidekiq::Scheduler.enqueue_job(config)
+    end
+
     it 'enqueue_job respects queue params' do
       config = {
         'cron' => '* * * * *',
